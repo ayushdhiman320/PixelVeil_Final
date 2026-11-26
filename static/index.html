@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PixelVeil — Anti-Forensic JPEG Metadata Tool</title>
+  <meta name="description" content="PixelVeil: Advanced anti-forensic JPEG metadata manipulation with AI-powered compatibility analysis and forensic diff engine." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-grid"></div>
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 36 36" fill="none">
+        <path d="M18 2L33 10V26L18 34L3 26V10L18 2Z" stroke="url(#grad1)" stroke-width="2" fill="rgba(139,92,246,0.1)"/>
+        <circle cx="18" cy="18" r="6" fill="url(#grad1)" opacity="0.8"/>
+        <path d="M18 8L18 14M18 22L18 28M8 18L14 18M22 18L28 18" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="grad1" x1="3" y1="2" x2="33" y2="34" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#8b5cf6"/>
+            <stop offset="1" stop-color="#06b6d4"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <span class="logo-text">Pixel<span class="logo-accent">Veil</span></span>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge-purple">Anti-Forensic</span>
+      <span class="badge badge-cyan">AI-Powered</span>
+      <span class="badge badge-green">Dresden DB</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main App -->
+<main class="main">
+
+  <!-- STEP 1: Upload -->
+  <section id="upload-section" class="section active">
+    <div class="section-header">
+      <div class="step-badge">01</div>
+      <div>
+        <h1 class="section-title">Upload JPEG Image</h1>
+        <p class="section-desc">Drop a JPEG to extract all metadata fields — EXIF, XMP, IPTC, GPS, MakerNotes & more</p>
+      </div>
+    </div>
+
+    <div class="upload-zone" id="upload-zone">
+      <div class="upload-icon">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="30" stroke="url(#ug)" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <path d="M32 44V28M32 28L24 36M32 28L40 36" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="20" y="44" width="24" height="4" rx="2" fill="rgba(139,92,246,0.3)"/>
+          <defs>
+            <linearGradient id="ug" x1="2" y1="2" x2="62" y2="62" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#8b5cf6"/>
+              <stop offset="1" stop-color="#06b6d4"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <p class="upload-title">Drag & Drop your JPEG here</p>
+      <p class="upload-sub">or click to browse files</p>
+      <input type="file" id="file-input" accept=".jpg,.jpeg" style="display:none" />
+      <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+        Choose File
+      </button>
+    </div>
+
+    <div class="upload-progress" id="upload-progress" style="display:none">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <span class="progress-label" id="progress-label">Extracting metadata...</span>
+    </div>
+  </section>
+
+  <!-- STEP 2: Metadata Editor -->
+  <section id="editor-section" class="section" style="display:none">
+    <div class="two-col">
+
+      <!-- Left: Metadata Table -->
+      <div class="col-main">
+        <div class="card">
+          <div class="card-header">
+            <div class="step-badge">02</div>
+            <div>
+              <h2 class="card-title">Full Metadata Explorer</h2>
+              <p class="card-desc">Click any field to edit — changes trigger live AI compatibility analysis</p>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-sm btn-ghost" id="expand-all-btn" onclick="toggleAllGroups()">Expand All</button>
+              <div class="image-preview-mini" id="image-preview-mini"></div>
+            </div>
+          </div>
+
+          <div class="meta-search-bar">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="none">
+              <circle cx="8.5" cy="8.5" r="5.5" stroke="#6366f1" stroke-width="1.5"/>
+              <path d="M13 13L17 17" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <input type="text" id="meta-search" class="meta-search-input" placeholder="Search fields..." oninput="filterMetadata(this.value)" />
+          </div>
+
+          <div id="metadata-container" class="meta-container"></div>
+        </div>
+      </div>
+
+      <!-- Right: AI Agent Panel -->
+      <div class="col-side">
+
+        <!-- Active Changes -->
+        <div class="card card-sm" id="changes-card">
+          <div class="card-header">
+            <h3 class="card-title-sm">📝 Staged Changes</h3>
+            <span class="badge badge-orange" id="changes-count">0</span>
+          </div>
+          <div id="staged-changes-list" class="staged-list">
+            <p class="empty-hint">No changes staged yet. Edit a metadata field to begin.</p>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary btn-block" id="apply-btn" onclick="applyChanges()" disabled>
+              Apply Changes to Image
+            </button>
+            <button class="btn btn-ghost btn-block" onclick="clearChanges()">Clear All</button>
+          </div>
+        </div>
+
+        <!-- AI Agent -->
+        <div class="card card-sm" id="agent-card" style="display:none">
+          <div class="card-header">
+            <h3 class="card-title-sm">🤖 AI Forensic Agent</h3>
+            <div class="agent-thinking" id="agent-thinking" style="display:none">
+              <span class="dot-pulse"></span>
+              <span>Analyzing...</span>
+            </div>
+          </div>
+
+          <div id="agent-score-bar" class="score-section"></div>
+          <div id="agent-issues" class="issues-list"></div>
+          <div id="agent-analysis" class="agent-text"></div>
+          <div id="agent-risks" class="risks-section"></div>
+          <div id="agent-alternatives" class="alternatives-section"></div>
+          <div id="agent-cascade" class="cascade-section"></div>
+          <div id="agent-recommendation" class="recommendation-box"></div>
+        </div>
+
+        <!-- Forensic Diff -->
+        <div class="card card-sm" id="diff-card" style="display:none">
+          <div class="card-header">
+            <h3 class="card-title-sm">🔍 Forensic Analysis</h3>
+            <button class="btn btn-sm btn-cyan" onclick="runForensicDiff()">Run Diff</button>
+          </div>
+          <div id="diff-results"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="bottom-bar">
+      <button class="btn btn-ghost" onclick="resetApp()">← Upload New Image</button>
+      <button class="btn btn-cyan" id="diff-btn" onclick="runForensicDiff()" style="display:none">
+        📊 Run Forensic Diff
+      </button>
+      <button class="btn btn-green" id="download-btn" onclick="downloadModified()" style="display:none">
+        ⬇ Download Modified JPEG
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<!-- MODALS -->
+
+<!-- Field Edit Modal -->
+<div class="modal-overlay" id="edit-modal" style="display:none" onclick="closeEditModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="edit-modal-title">Edit Field</h3>
+      <button class="modal-close" onclick="closeEditModalBtn()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-info" id="edit-field-info"></div>
+      <div class="field-current">
+        <label class="field-label">Current Value</label>
+        <div class="field-current-val" id="edit-current-val"></div>
+      </div>
+      <div class="field-new">
+        <label class="field-label">New Value</label>
+        <input type="text" id="edit-new-val" class="field-input" placeholder="Enter new value..." />
+        <div id="edit-camera-select-wrap" style="display:none">
+          <label class="field-label" style="margin-top:12px">Or select a camera:</label>
+          <select id="edit-camera-select" class="field-input" onchange="onCameraSelect(this.value)">
+            <option value="">-- Choose camera from database --</option>
+          </select>
+        </div>
+      </div>
+      <div class="compat-preview" id="compat-preview" style="display:none">
+        <div class="compat-score-row">
+          <span class="compat-label">Compatibility Score</span>
+          <span class="compat-score" id="compat-score-val">--</span>
+        </div>
+        <div class="compat-bar-wrap">
+          <div class="compat-bar" id="compat-bar"></div>
+        </div>
+        <div id="compat-issues-preview"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeEditModalBtn()">Cancel</button>
+      <button class="btn btn-secondary" id="preview-cascade-btn" onclick="showCascadeModal()" style="display:none">📋 Preview Cascade</button>
+      <button class="btn btn-primary" onclick="stageFieldChange()">Stage Change</button>
+      <button class="btn btn-purple" onclick="runAgentForField()">🤖 Ask AI Agent</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cascade Preview Modal -->
+<div class="modal-overlay" id="cascade-modal" style="display:none" onclick="closeCascadeModal(event)">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h3>🔄 Auto-Harmonize Preview</h3>
+      <button class="modal-close" onclick="closeCascadeModalBtn()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc">The AI Agent suggests these cascaded changes to minimize forensic detection:</p>
+      <div id="cascade-preview-list" class="cascade-preview-list"></div>
+      <div class="cascade-warning" id="cascade-warnings"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCascadeModalBtn()">Cancel</button>
+      <button class="btn btn-purple" onclick="applyCascadeChanges()">Apply All Cascaded Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+pixelveil_config.txt
+uploads/
+outputs/
+test_image/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
